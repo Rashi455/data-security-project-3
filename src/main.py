@@ -72,11 +72,37 @@ def encryption(files_folder_path="data/files",encrypted_folder_path="data/encryp
     with open("data/index.txt","w") as file:
         for keyword, files in encrypted_index.items():
             file.write(keyword+" "+" ".join(files)+"\n")
-        
-        
+
+    print("encrypted index:")   
+    for keyword, files in encrypted_index.items():
+        print("Encrypted keyword:", keyword)
+        print("Files:", files)  
     return
 
+#-------- TASK 3. TOKEN GENERATION FUNCTION ----------
+def token_generation(keyword):
+    print("\n-------TASK 3. KEY GENERATION FUNCTION--------------")
+    #reading a secret key k1 from skprf.txt file
+    with open("data/skprf.txt","r") as file:
+            sk1=file.read().strip()
+    sk1=bytes.fromhex(sk1)
+    #generating token tk
+    cipher=AES.new(sk1,AES.MODE_CBC)
+    tk=cipher.encrypt(pad(keyword.encode("utf-8"),AES.block_size))
+    tk=tk.hex()
 
+    print("keyword: ",keyword)
+    print("generated token: ",tk)
+
+    with open("data/token.txt","w") as file:
+        file.write(tk)
+    return
+
+#-------- TASK 4. SEARCH FUNCTION ----------
+def search(keyword):
+    print("\n-------TASK 4. SEARCH FUNCTION--------------")
+    return
 
 #key_generation()
-encryption()
+#encryption()
+token_generation("packers")
