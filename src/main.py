@@ -1,6 +1,6 @@
 import os
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad
+from Crypto.Util.Padding import pad, unpad
 
 #-------TASK 1. KEY GENERATION FUNCTION--------------
 def key_generation(lam=256):
@@ -87,7 +87,7 @@ def token_generation(keyword):
             sk1=file.read().strip()
     sk1=bytes.fromhex(sk1)
     #generating token tk
-    cipher=AES.new(sk1,AES.MODE_CBC)
+    cipher=AES.new(sk1,AES.MODE_ECB)
     tk=cipher.encrypt(pad(keyword.encode("utf-8"),AES.block_size))
     tk=tk.hex()
 
@@ -99,10 +99,45 @@ def token_generation(keyword):
     return
 
 #-------- TASK 4. SEARCH FUNCTION ----------
-def search(keyword):
+def search(token_filepath="data/token.txt", encrypted_folder_path="data/encrypted_files"):
     print("\n-------TASK 4. SEARCH FUNCTION--------------")
+    #reading a token tk file
+    with open(token_filepath,"r") as file:
+        tk=file.read().strip()
+
+    with open("data/skaes.txt","r") as file:
+        sk2=file.read().strip()
+    sk2=bytes.fromhex(sk2)
+
+    matching_files=[]
+    with open("data/index.txt","r") as file:
+        for line in file:
+            values=line.split()
+            if values and values[0]==tk:
+                matching_files=values[1:]
+                break
+
+    with open("data/result.txt","w") as file:
+        if len(matching_files)>0:
+            print("files found with the keyword:"," ".join(matching_files))
+            file.write(" ".join(matching_files)+"\n")
+
+            for filename in matching_files:
+                filepath=os.path.join(encrypted_folder_path,"enc_"+filename)
+                with open(filepath,"r") as encrypted_file:
+                    ciphertext=bytes.fromhex(encrypted_file.read().strip())
+
+                iv=ciphertext[:AES.block_size]
+                ciphertext=ciphertext[AES.block_size:]
+
+                cipher=AES.new(sk2,AES.MODE_CBC,iv)
+                plaintext=unpad(cipher.decrypt(ciphertext),AES.block_size).decode("utf-8")
+                print(filename,plaintext)
+                file.write(filename+" "+plaintext+"\n")
+
     return
 
-#key_generation()
-#encryption()
+key_generation()
+encryption()
 token_generation("packers")
+search()

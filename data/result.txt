@@ -1,0 +1,5 @@
+f1.txt f2.txt f3.txt f5.txt
+f1.txt bengals steelers packers
+f2.txt packers patriots
+f3.txt packers
+f5.txt steelers packers
