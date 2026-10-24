@@ -40,30 +40,24 @@ def encryption(files_folder_path="data/files",encrypted_folder_path="data/encryp
 
     for file in os.listdir(files_folder_path):
         file_path=os.path.join(files_folder_path,file)
-        with open(file_path,"r") as file:
-                keywords=file.read().split()
+        with open(file_path,"r") as input_file:
+                keywords=input_file.read().split()
 
         #generating encrypted file from plain file
-        with open(file_path,"rb") as file:
-            plaintext=file.read()
+        with open(file_path,"rb") as input_file:
+            plaintext=input_file.read()
 
         #generating a random initialization vector iv and convrting to hex
         iv=os.urandom(16)
-        iv=iv.hex()
-
-        #padding the plaintext because it only encrypts in sections of 16 bytes
-        #so the message needs the to be padded to that
-        padding_length=AES.block_size-(len(plaintext)%AES.block_size)
-        plaintext=plaintext+bytes([padding_length])*padding_length
 
         #encrypting plaintext with AES secret key sk1 and initialization vector iv
-        cipher=AES.new(sk1,AES.MODE_CBC,iv)
-        ciphertext=cipher.encrypt(plaintext)
+        cipher=AES.new(sk2,AES.MODE_CBC,iv)
+        ciphertext=iv+cipher.encrypt(pad(plaintext,AES.block_size))
         ciphertext=ciphertext.hex()
         #saving encrypted file
-        encrypted_filepath = os.path.join(encrypted_folder_path,file + "_enc")
-        with open(encrypted_filepath,"wb") as file:
-            file.write(ciphertext)
+        encrypted_filepath = os.path.join(encrypted_folder_path,"enc_"+file)
+        with open(encrypted_filepath,"w") as output_file:
+            output_file.write(ciphertext)
 
         #using AES-ECB-256 to simulatio PRF to encrypt each keyword
         for word in keywords:
@@ -71,21 +65,18 @@ def encryption(files_folder_path="data/files",encrypted_folder_path="data/encryp
             encrypted_word=cipher.encrypt(pad(word.encode("utf-8"),AES.block_size)).hex()
 
             if encrypted_word not in encrypted_index:
-                encrypted_index[encrypted_word]
+                encrypted_index[encrypted_word]=[]
             if file not in encrypted_index[encrypted_word]:
                 encrypted_index[encrypted_word].append(file)
 
-        with open("data/index.txt","w") as file:
-            for keyword, files in encrypted_index.items():
-                file.write(keyword+" "+" ".join(files)+"\n")
+    with open("data/index.txt","w") as file:
+        for keyword, files in encrypted_index.items():
+            file.write(keyword+" "+" ".join(files)+"\n")
         
         
     return
 
 
 
-
-
-
-
-key_generation()
+#key_generation()
+encryption()
