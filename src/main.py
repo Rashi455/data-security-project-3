@@ -26,7 +26,7 @@ def key_generation(lam=256):
     return
 
 #-------- TASK 2. ENCRYPTION FUNCTION ----------
-def encryption(files_folder_path="data/files",encrypted_folder_path="data/encrypted_files"):
+def encryption(files_folder_path="data/data_files",ciphertext_folder_path="data/ciphertext_files"):
     print("\n-------TASK 2. ENCRYPTION FUNCTION--------------")
     #reading secret key sk1 and sk2 from file
     with open("data/skprf.txt","r") as file:
@@ -55,7 +55,8 @@ def encryption(files_folder_path="data/files",encrypted_folder_path="data/encryp
         ciphertext=iv+cipher.encrypt(pad(plaintext,AES.block_size))
         ciphertext=ciphertext.hex()
         #saving encrypted file
-        encrypted_filepath = os.path.join(encrypted_folder_path,"enc_"+file)
+        ciphertext_file="c"+file[1:]
+        encrypted_filepath = os.path.join(ciphertext_folder_path,ciphertext_file)
         with open(encrypted_filepath,"w") as output_file:
             output_file.write(ciphertext)
 
@@ -67,7 +68,7 @@ def encryption(files_folder_path="data/files",encrypted_folder_path="data/encryp
             if encrypted_word not in encrypted_index:
                 encrypted_index[encrypted_word]=[]
             if file not in encrypted_index[encrypted_word]:
-                encrypted_index[encrypted_word].append(file)
+                encrypted_index[encrypted_word].append(ciphertext_file)
 
     with open("data/index.txt","w") as file:
         for keyword, files in encrypted_index.items():
@@ -99,7 +100,7 @@ def token_generation(keyword):
     return
 
 #-------- TASK 4. SEARCH FUNCTION ----------
-def search(token_filepath="data/token.txt", encrypted_folder_path="data/encrypted_files"):
+def search(token_filepath="data/token.txt", encrypted_folder_path="data/ciphertext_files"):
     print("\n-------TASK 4. SEARCH FUNCTION--------------")
     #reading a token tk file
     with open(token_filepath,"r") as file:
@@ -123,7 +124,7 @@ def search(token_filepath="data/token.txt", encrypted_folder_path="data/encrypte
             file.write(" ".join(matching_files)+"\n")
 
             for filename in matching_files:
-                filepath=os.path.join(encrypted_folder_path,"enc_"+filename)
+                filepath=os.path.join(encrypted_folder_path,filename)
                 with open(filepath,"r") as encrypted_file:
                     ciphertext=bytes.fromhex(encrypted_file.read().strip())
 
