@@ -3,7 +3,16 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
 #-------TASK 1. KEY GENERATION FUNCTION--------------
-def key_generation(lam=256):
+def key_generation(lam=256,sk1_filepath="data/skprf.txt",sk2_filepath="data/skaes.txt"):
+    sk1_folder=os.path.dirname(sk1_filepath)
+    if sk1_folder and not os.path.isdir(sk1_folder):
+        os.makedirs(sk1_folder)
+        print("created token folder because it did not exist: ", sk1_folder)
+    sk2_folder=os.path.dirname(sk2_filepath)
+    if sk2_folder and not os.path.isdir(sk2_folder):
+        os.makedirs(sk2_folder)
+        print("created token folder because it did not exist: ", sk2_folder)
+
     print("\n-------TASK 1. KEY GENERATION FUNCTION--------------")
     #generating secret key of 256 bits for PRF and AES
     sk1=os.urandom(lam//8)
@@ -18,28 +27,46 @@ def key_generation(lam=256):
     print("AES Secret key (sk2):",sk2)
 
     #writing key to file
-    with open("data/skprf.txt","w") as file:
+    with open(sk1_filepath,"w") as file:
         file.write(sk1)
 
-    with open("data/skaes.txt","w") as file:
+    with open(sk2_filepath,"w") as file:
         file.write(sk2)
     return
 
 #-------- TASK 2. ENCRYPTION FUNCTION ----------
-def encryption(files_folder_path="data/data_files",ciphertext_folder_path="data/ciphertext_files"):
+def encryption(data_files_folder_path="data/data_files",
+               ciphertext_folder_path="data/ciphertextfiles",sk1_filepath="data/skprf.txt",
+               sk2_filepath="data/skaes.txt",index_filepath="data/index.txt"):
+    if not os.path.isdr(data_files_folder_path):
+        print("error: the specified path for the data files folder does not exist in the current directory")
+        return
+    if not os.path.isdr(ciphertext_folder_path):
+        print("created ciphertext folder because it did not exist: ",ciphertext_folder_path)
+        os.makedirs(ciphertext_folder_path)
+    if not os.path.isfile(sk1_filepath):
+        print("error! the specified file sk1 for PRF does not exist in the current directory: ",sk2_filepath)
+        return
+    if not os.path.isfile(sk2_filepath):
+        print("error! the specified file sk2 for AES does not exist in the current directory: ",sk1_filepath)
+        return
+    index_folder=os.path.dirname(sk2_filepath)
+    if index_folder and not os.path.isdir(index_filepath):
+            os.makedirs(index_folder)
+            print("created token folder because it did not exist: ", index_folder)
     print("\n-------TASK 2. ENCRYPTION FUNCTION--------------")
     #reading secret key sk1 and sk2 from file
-    with open("data/skprf.txt","r") as file:
+    with open(sk1_filepath,"r") as file:
         sk1=file.read().strip()
-    with open("data/skaes.txt","r") as file:
+    with open(sk2_filepath,"r") as file:
         sk2=file.read().strip()
     sk1=bytes.fromhex(sk1)
     sk2=bytes.fromhex(sk2)
 
     encrypted_index={}
 
-    for file in os.listdir(files_folder_path):
-        file_path=os.path.join(files_folder_path,file)
+    for file in os.listdir(data_files_folder_path):
+        file_path=os.path.join(data_files_folder_path,file)
         with open(file_path,"r") as input_file:
                 keywords=input_file.read().split()
 
@@ -55,7 +82,10 @@ def encryption(files_folder_path="data/data_files",ciphertext_folder_path="data/
         ciphertext=iv+cipher.encrypt(pad(plaintext,AES.block_size))
         ciphertext=ciphertext.hex()
         #saving encrypted file
-        ciphertext_file="c"+file[1:]
+        if file.startswith("f") and file[1:].split(".")[0].isdigit():
+            ciphertext_file="c"+file[1:]
+        else:
+            ciphertext_file="c_"+file
         encrypted_filepath = os.path.join(ciphertext_folder_path,ciphertext_file)
         with open(encrypted_filepath,"w") as output_file:
             output_file.write(ciphertext)
@@ -67,10 +97,10 @@ def encryption(files_folder_path="data/data_files",ciphertext_folder_path="data/
 
             if encrypted_word not in encrypted_index:
                 encrypted_index[encrypted_word]=[]
-            if file not in encrypted_index[encrypted_word]:
+            if ciphertext_file not in encrypted_index[encrypted_word]:
                 encrypted_index[encrypted_word].append(ciphertext_file)
 
-    with open("data/index.txt","w") as file:
+    with open(index_filepath,"w") as file:
         for keyword, files in encrypted_index.items():
             file.write(keyword+" "+" ".join(files)+"\n")
 
@@ -81,10 +111,13 @@ def encryption(files_folder_path="data/data_files",ciphertext_folder_path="data/
     return
 
 #-------- TASK 3. TOKEN GENERATION FUNCTION ----------
-def token_generation(keyword):
-    print("\n-------TASK 3. KEY GENERATION FUNCTION--------------")
+def token_generation(keyword,sk1_filepath="data/skprf.txt",token_filepath="data/token.txt"):
+    print("\n-------TASK 3. TOKEN GENERATION FUNCTION--------------")
+    if not os.path.isfile(sk1_filepath):
+        print("error! the specified file sk2 for PRF does not exist in the current directory: ",sk1_filepath)
+        return
     #reading a secret key k1 from skprf.txt file
-    with open("data/skprf.txt","r") as file:
+    with open(sk1_filepath,"r") as file:
             sk1=file.read().strip()
     sk1=bytes.fromhex(sk1)
     #generating token tk
@@ -95,23 +128,41 @@ def token_generation(keyword):
     print("keyword: ",keyword)
     print("generated token: ",tk)
 
-    with open("data/token.txt","w") as file:
+    token_folder=os.path.dirname(token_filepath)
+    if token_folder and not os.path.isdir(token_folder):
+        os.makedirs(token_folder)
+        print("created token folder because it did not exist: ", token_folder)
+
+    with open(token_filepath,"w") as file:
         file.write(tk)
     return
 
 #-------- TASK 4. SEARCH FUNCTION ----------
-def search(token_filepath="data/token.txt", encrypted_folder_path="data/ciphertext_files"):
+def search(token_filepath="data/token.txt", encrypted_folder_path="data/ciphertextfiles",sk2_filepath="data/skaes.txt", index_filepath="data/index.txt"):
     print("\n-------TASK 4. SEARCH FUNCTION--------------")
+    if not os.path.isfile(token_filepath):
+        print("error! the specified file for the token does not exist in the current directory: ",token_filepath)
+        return
+    if not os.path.isdir(encrypted_folder_path):
+        print("error! the specified path for the ciphertext folder does not exist in the current directory: ",encrypted_folder_path)
+        return
+    if not os.path.isfile(sk2_filepath):
+        print("error! the specified file sk2 for AES does not exist in the current directory: ",sk2_filepath)
+        return
+    if not os.path.isfile(sk2_filepath):
+        print("error! the specified index file does not exist in the current directory: ",index_filepath)
+        return
+    
     #reading a token tk file
     with open(token_filepath,"r") as file:
         tk=file.read().strip()
 
-    with open("data/skaes.txt","r") as file:
+    with open(sk2_filepath,"r") as file:
         sk2=file.read().strip()
     sk2=bytes.fromhex(sk2)
 
     matching_files=[]
-    with open("data/index.txt","r") as file:
+    with open(index_filepath,"r") as file:
         for line in file:
             values=line.split()
             if values and values[0]==tk:
