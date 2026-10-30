@@ -3,7 +3,10 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
 #-------TASK 1. KEY GENERATION FUNCTION--------------
-def key_generation(lam=256,sk1_filepath="data/skprf.txt",sk2_filepath="data/skaes.txt"):
+def key_generation(sk1_filepath,sk2_filepath,lam=256):
+    if lam != 256:
+        print("error! security parameter should be 256")
+        return
     sk1_folder=os.path.dirname(sk1_filepath)
     if sk1_folder and not os.path.isdir(sk1_folder):
         os.makedirs(sk1_folder)
@@ -35,9 +38,7 @@ def key_generation(lam=256,sk1_filepath="data/skprf.txt",sk2_filepath="data/skae
     return
 
 #-------- TASK 2. ENCRYPTION FUNCTION ----------
-def encryption(data_files_folder_path="data/data_files",
-               ciphertext_folder_path="data/ciphertextfiles",sk1_filepath="data/skprf.txt",
-               sk2_filepath="data/skaes.txt",index_filepath="data/index.txt"):
+def encryption(data_files_folder_path,ciphertext_folder_path,sk1_filepath,sk2_filepath,index_filepath):
     if not os.path.isdir(data_files_folder_path):
         print("error: the specified path for the data files folder does not exist in the current directory")
         return
@@ -111,7 +112,7 @@ def encryption(data_files_folder_path="data/data_files",
     return
 
 #-------- TASK 3. TOKEN GENERATION FUNCTION ----------
-def token_generation(keyword,sk1_filepath="data/skprf.txt",token_filepath="data/token.txt"):
+def token_generation(keyword,sk1_filepath,token_filepath):
     print("\n-------TASK 3. TOKEN GENERATION FUNCTION--------------")
     if not os.path.isfile(sk1_filepath):
         print("error! the specified file sk1 for PRF does not exist in the current directory: ",sk1_filepath)
@@ -138,8 +139,7 @@ def token_generation(keyword,sk1_filepath="data/skprf.txt",token_filepath="data/
     return
 
 #-------- TASK 4. SEARCH FUNCTION ----------
-def search(token_filepath="data/token.txt", encrypted_folder_path="data/ciphertextfiles",sk2_filepath="data/skaes.txt", 
-           index_filepath="data/index.txt",result_path="data/result.txt"):
+def search(token_filepath, encrypted_folder_path,sk2_filepath, index_filepath,result_path):
     print("\n-------TASK 4. SEARCH FUNCTION--------------")
     if not os.path.isfile(token_filepath):
         print("error! the specified file for the token does not exist in the current directory: ",token_filepath)
@@ -195,7 +195,10 @@ def search(token_filepath="data/token.txt", encrypted_folder_path="data/cipherte
     return
 
 if __name__ == "__main__":
-    key_generation()
-    encryption()
-    token_generation("packers")
-    search()
+    key_generation("data/skprf.txt","data/skaes.txt",256)
+
+    encryption("data/data_files","data/ciphertextfiles","data/skprf.txt","data/skaes.txt","data/index.txt")
+
+    token_generation("packers", "data/skprf.txt", "data/token.txt")
+
+    search("data/token.txt", "data/ciphertextfiles", "data/skaes.txt", "data/index.txt", "data/result.txt")
